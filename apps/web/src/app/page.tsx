@@ -1,30 +1,114 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import {
   Terminal,
   BarChart2,
   PieChart,
-  CheckCircle2,
   ArrowRight,
   ShieldCheck,
   Activity,
-  Award,
   Globe,
   Cpu,
-  Smartphone,
   Server,
   Check,
   HelpCircle,
   ChevronDown,
   Zap,
-  Layers
+  Layers,
+  Radio
 } from 'lucide-react';
 
+/* Animated Counter Component that reliably starts counting from 0 when scrolled into view */
+function AnimatedCounter({ end, duration = 2200, suffix = '' }: { end: number; duration?: number; suffix?: string }) {
+  const [count, setCount] = useState(0);
+  const counterRef = useRef<HTMLHeadingElement>(null);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          let startTime: number | null = null;
+
+          const animate = (currentTime: number) => {
+            if (!startTime) startTime = currentTime;
+            const progress = Math.min((currentTime - startTime) / duration, 1);
+            
+            // Ease-out formula for smooth deceleration towards final target
+            const easeOutProgress = 1 - Math.pow(1 - progress, 3);
+            setCount(Math.floor(easeOutProgress * end));
+
+            if (progress < 1) {
+              requestAnimationFrame(animate);
+            }
+          };
+
+          requestAnimationFrame(animate);
+        }
+      },
+      { threshold: 0.05, rootMargin: '0px 0px -10% 0px' }
+    );
+
+    if (counterRef.current) {
+      observer.observe(counterRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [end, duration, hasAnimated]);
+
+  return (
+    <h3 ref={counterRef} className="text-4xl sm:text-5xl font-black text-white tracking-tight">
+      {count.toLocaleString()}{suffix}
+    </h3>
+  );
+}
+
 export default function TradeProLandingPage() {
-  const [mentorRole, setMentorRole] = useState<'student' | 'mentor'>('student');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [isScrolled, setIsScrolled] = useState<boolean>(false);
+  const [activeSlide, setActiveSlide] = useState<number>(0);
+
+  const statsImages = [
+    {
+      src: '/stats-1.jpg',
+      location: 'LIVE SESSION',
+      title: 'Global Trading Desk',
+      sub: 'Multi-Monitor Strategy Setup'
+    },
+    {
+      src: '/stats-2.jpg',
+      location: 'BACKTEST TERMINAL',
+      title: 'Institutional Analytics',
+      sub: 'Tick-Data Strategy Simulation'
+    }
+  ];
+
+  // Images change automatically every 5 seconds like a smooth video motion
+  useEffect(() => {
+    const slideInterval = setInterval(() => {
+      setActiveSlide((prev) => (prev + 1) % statsImages.length);
+    }, 5000);
+
+    return () => clearInterval(slideInterval);
+  }, [statsImages.length]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 40) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const toggleFaq = (idx: number) => {
     setOpenFaq(openFaq === idx ? null : idx);
@@ -41,7 +125,7 @@ export default function TradeProLandingPage() {
     },
     {
       q: 'Is there a limit on how many slave accounts I can connect?',
-      a: 'The Pro Trader and Mentor tiers allow unlimited slave account connections with individual lot-size multipliers and custom risk controls per account.',
+      a: 'The Pro Trader tier allows unlimited slave account connections with individual lot-size multipliers and custom risk controls per account.',
     },
     {
       q: 'How does the mentor/student auditing feature work?',
@@ -52,89 +136,155 @@ export default function TradeProLandingPage() {
   const brokers = [
     { name: 'MetaTrader 4', category: 'Terminal Platform', icon: Activity, color: 'text-blue-600' },
     { name: 'MetaTrader 5', category: 'Terminal Platform', icon: Cpu, color: 'text-indigo-600' },
-    { name: 'cTrader', category: 'ECN Trading', icon: Globe, color: 'text-emerald-600' },
+    { name: 'cTrader', category: 'ECN Trading', icon: Globe, color: 'text-sky-600' },
     { name: 'TradingView', category: 'Webhook Alerts', icon: BarChart2, color: 'text-blue-500' },
-    { name: 'FTMO', category: 'Prop Firm Sync', icon: ShieldCheck, color: 'text-amber-500' },
-    { name: 'FundedNext', category: 'Prop Firm Sync', icon: Zap, color: 'text-purple-600' },
+    { name: 'FTMO', category: 'Prop Firm Sync', icon: ShieldCheck, color: 'text-slate-600' },
+    { name: 'FundedNext', category: 'Prop Firm Sync', icon: Zap, color: 'text-blue-600' },
     { name: 'IC Markets', category: 'Forex Broker', icon: Server, color: 'text-sky-600' },
-    { name: 'Pepperstone', category: 'ECN Broker', icon: Layers, color: 'text-rose-500' },
+    { name: 'Pepperstone', category: 'ECN Broker', icon: Layers, color: 'text-indigo-600' },
   ];
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-600">
+    <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-blue-100 selection:text-blue-600 overflow-x-hidden">
       
-      {/* 1. Header Navigation */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white font-black flex items-center justify-center text-xs shadow-md shadow-blue-500/20">
-              TJ
+      {/* 1. Floating Pill Navigation Header */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out flex justify-center ${
+          isScrolled ? 'py-3 px-4' : 'py-6 px-8 bg-transparent'
+        }`}
+      >
+        <div
+          className={`transition-all duration-300 ease-in-out flex items-center justify-between w-full max-w-7xl ${
+            isScrolled
+              ? 'bg-slate-950/90 backdrop-blur-xl border border-slate-800/80 rounded-full py-2.5 px-6 shadow-2xl shadow-slate-900/10 max-w-5xl text-white'
+              : 'border-b border-slate-200/80 pb-4 text-slate-900'
+          }`}
+        >
+          {/* Brand Logo */}
+          <div className="flex items-center gap-10">
+            <div className="flex items-center gap-2.5 cursor-pointer">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white font-black flex items-center justify-center text-xs shadow-md shadow-blue-600/30">
+                TJ
+              </div>
+              <span className={`font-black tracking-tight text-lg ${isScrolled ? 'text-white' : 'text-slate-900'}`}>
+                TradePro
+              </span>
             </div>
-            <span className="font-extrabold text-slate-900 tracking-tight text-base">TradePro</span>
+
+            {/* Nav Menu */}
+            <nav className={`hidden lg:flex items-center gap-8 text-xs font-semibold ${isScrolled ? 'text-slate-300' : 'text-slate-600'}`}>
+              <a href="#backtester" className="hover:text-blue-600 transition-colors">Backtester</a>
+              <a href="#brokers" className="hover:text-blue-600 transition-colors">Supported Brokers</a>
+              <a href="#pricing" className="hover:text-blue-600 transition-colors">Pricing</a>
+              <a href="#stats" className="hover:text-blue-600 transition-colors">Stats</a>
+              <a href="#faq" className="hover:text-blue-600 transition-colors">FAQ</a>
+            </nav>
           </div>
-          <nav className="hidden md:flex items-center gap-8 text-xs font-semibold text-slate-600">
-            <a href="#backtester" className="hover:text-blue-600 transition-colors">Backtester</a>
-            <a href="#brokers" className="hover:text-blue-600 transition-colors">Supported Brokers</a>
-            <a href="#mentorship" className="hover:text-blue-600 transition-colors">Mentorship</a>
-            <a href="#integrations" className="hover:text-blue-600 transition-colors">Integrations</a>
-            <a href="#pricing" className="hover:text-blue-600 transition-colors">Pricing</a>
-            <a href="#faq" className="hover:text-blue-600 transition-colors">FAQ</a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <a href="#pricing" className="bg-slate-900 hover:bg-blue-600 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-sm">
-              Get Started
-            </a>
+
+          {/* Action CTAs */}
+          <div className="flex items-center gap-4">
+            <Link
+              href="/login"
+              className={`text-xs font-semibold transition-colors hidden sm:inline-block ${
+                isScrolled ? 'text-slate-300 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Sign in
+            </Link>
+            <Link
+              href="/signup"
+              className={`text-xs font-bold px-5 py-2.5 rounded-full transition-all shadow-md hover:scale-105 ${
+                isScrolled ? 'bg-white text-slate-950 hover:bg-slate-100' : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              Sign up
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* 2. Restored Hero Section */}
-      <section className="pt-20 pb-12 px-6 max-w-5xl mx-auto text-center">
-        <span className="text-xs font-bold text-blue-600 uppercase tracking-widest bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-100 inline-block mb-6">
-          Next-Gen Trade Copier & Analytics
-        </span>
-        <h1 className="text-4xl sm:text-6xl font-black tracking-tight text-slate-900 leading-tight">
-          Automate, Backtest & Scale Your Trading Operations
-        </h1>
-        <p className="text-base sm:text-lg text-slate-600 mt-6 max-w-2xl mx-auto leading-relaxed">
-          Synchronize master and slave accounts instantly across prop firms and top brokers with sub-millisecond execution speeds.
-        </p>
-
-        {/* Hero Actions */}
-        <div className="mt-8 flex items-center justify-center gap-4">
-          <a href="#pricing" className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-6 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center gap-2">
-            Start Free Trial <ArrowRight size={14} />
-          </a>
-          <a href="#backtester" className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-6 py-3.5 rounded-xl transition-colors">
-            Explore Features
-          </a>
+      {/* 2. Hero Section */}
+      <section className="relative min-h-screen bg-gradient-to-br from-white via-slate-50 to-blue-50/30 text-slate-900 flex flex-col justify-between overflow-hidden pt-28">
+        
+        {/* Right Background Image Container */}
+        <div className="absolute right-0 top-0 bottom-0 w-full lg:w-3/5 h-full z-0 pointer-events-none overflow-hidden animate-fade-in-right">
+          <img
+            src="/hero-image.jpg"
+            alt="Knowledge vs Action Desk Setup"
+            className="w-full h-full object-cover object-center filter brightness-95 contrast-105 opacity-90"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-white via-white/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-white/20" />
         </div>
 
-        {/* Account Sync Status Card */}
-        <div className="mt-12 max-w-md mx-auto space-y-3 text-left">
-          <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex justify-between items-center hover:border-blue-300 transition-all">
-            <div>
-              <p className="text-xs font-bold text-slate-900">Slave Account #1 (Prop Fund)</p>
-              <p className="text-[10px] font-mono text-slate-500 mt-0.5">Copied • Latency: 1.2ms</p>
+        {/* Hero Left Content */}
+        <div className="max-w-7xl mx-auto w-full px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center my-auto z-10 relative">
+          <div className="lg:col-span-7 text-left space-y-6 pt-10 lg:pt-0">
+            
+            {/* Spotlight Badge */}
+            <div className="inline-flex items-center gap-2 bg-blue-50/90 border border-blue-200/80 px-4 py-1.5 rounded-full text-[11px] font-bold text-blue-700 tracking-wider animate-fade-in-up backdrop-blur-xs">
+              <span className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+              <span className="text-blue-600 uppercase font-black">NEXT-GEN TERMINAL</span>
+              <span className="text-blue-200">|</span>
+              <span>TRADE COPIER & ANALYTICS</span>
             </div>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Synced
-            </span>
+
+            {/* Headline */}
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[1.08] animate-fade-in-up [animation-delay:150ms]">
+              Automate, <span className="text-blue-600">backtest</span> & scale your trading
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-base sm:text-lg text-slate-600 max-w-xl font-medium leading-relaxed animate-fade-in-up [animation-delay:300ms]">
+              One platform for execution, analytics, and trade copying. Built to scale with the world’s leading prop firms and retail brokers.
+            </p>
+
+            {/* Call to Action Buttons */}
+            <div className="pt-2 flex flex-wrap items-center gap-4 animate-fade-in-up [animation-delay:450ms]">
+              <Link
+                href="/signup"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-black text-sm px-8 py-3.5 rounded-full transition-all shadow-xl shadow-blue-600/25 flex items-center gap-2 hover:scale-105"
+              >
+                Join the Platform <ArrowRight size={16} />
+              </Link>
+              <a
+                href="#backtester"
+                className="bg-white/90 hover:bg-slate-100 text-slate-800 border border-slate-200/90 font-bold text-sm px-7 py-3.5 rounded-full transition-all shadow-xs"
+              >
+                Explore Features
+              </a>
+            </div>
+
+            {/* Sync Card */}
+            <div className="pt-4 max-w-sm animate-fade-in-up [animation-delay:600ms]">
+              <div className="bg-white/90 backdrop-blur-md border border-slate-200 p-4 rounded-2xl flex justify-between items-center text-xs shadow-md shadow-slate-200/50">
+                <div>
+                  <p className="font-extrabold text-slate-900">Slave Account #1 (Prop Fund)</p>
+                  <p className="text-[10px] text-slate-500 font-mono mt-0.5">Latency: 0.8ms</p>
+                </div>
+                <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-full">
+                  Synced
+                </span>
+              </div>
+            </div>
           </div>
-          <div className="bg-white border border-slate-200 p-4 rounded-2xl shadow-sm flex justify-between items-center hover:border-blue-300 transition-all">
-            <div>
-              <p className="text-xs font-bold text-slate-900">Slave Account #2 (Personal FX)</p>
-              <p className="text-[10px] font-mono text-slate-500 mt-0.5">Copied • Latency: 0.8ms</p>
-            </div>
-            <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span> Synced
-            </span>
+        </div>
+
+        {/* Partner Brands Bar */}
+        <div className="relative z-10 border-t border-slate-200/80 bg-white/80 backdrop-blur-md py-6 px-8 mt-12">
+          <div className="max-w-6xl mx-auto flex flex-wrap justify-between items-center gap-6 opacity-75 hover:opacity-100 transition-opacity text-xs font-extrabold tracking-widest text-slate-600">
+            <span>METATRADER</span>
+            <span>TRADINGVIEW</span>
+            <span>CTRADER</span>
+            <span>FTMO</span>
+            <span>IC MARKETS</span>
+            <span>PEPPERSTONE</span>
           </div>
         </div>
       </section>
 
-      {/* 3. Animated Brokers & Prop Firms Section */}
-      <section id="brokers" className="py-16 bg-white border-y border-slate-100 overflow-hidden">
+      {/* 3. Universal Compatibility Marquee */}
+      <section id="brokers" className="py-20 bg-white border-b border-slate-100 overflow-hidden">
         <div className="max-w-6xl mx-auto px-6 mb-8 text-center">
           <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-2">
             Universal Compatibility
@@ -144,13 +294,12 @@ export default function TradeProLandingPage() {
           </h2>
         </div>
 
-        {/* Marquee Wrapper */}
         <div className="relative w-full overflow-hidden bg-slate-50 py-6 border-y border-slate-100">
           <div className="flex w-[200%] animate-[marquee_25s_linear_infinite] hover:[animation-play-state:paused] gap-6 px-4">
             {[...brokers, ...brokers].map((broker, i) => {
               const IconComp = broker.icon;
               return (
-                <div key={i} className="flex items-center gap-3 bg-white border border-slate-200/80 px-5 py-3 rounded-xl shadow-xs shrink-0 hover:shadow-md transition-shadow">
+                <div key={i} className="flex items-center gap-3 bg-white border border-slate-200 px-5 py-3 rounded-xl shadow-xs shrink-0 hover:shadow-md transition-shadow">
                   <div className="p-2 rounded-lg bg-slate-50">
                     <IconComp className={`w-5 h-5 ${broker.color}`} />
                   </div>
@@ -165,7 +314,7 @@ export default function TradeProLandingPage() {
         </div>
       </section>
 
-      {/* 4. Deep Backtesting Engine & Strategy Lab */}
+      {/* 4. Strategy Backtester */}
       <section id="backtester" className="py-24 bg-slate-50/60 border-b border-slate-100 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -185,7 +334,7 @@ export default function TradeProLandingPage() {
                 </div>
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/70 flex justify-between items-center">
                   <span>Expectancy per Trade:</span>
-                  <span className="text-emerald-600 font-bold">+1.85 R</span>
+                  <span className="text-blue-600 font-bold">+1.85 R</span>
                 </div>
                 <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/70 flex justify-between items-center">
                   <span>Consecutive Max Wins:</span>
@@ -221,177 +370,8 @@ export default function TradeProLandingPage() {
         </div>
       </section>
 
-      {/* 5. Mentor & Student Collaboration Section */}
-      <section id="mentorship" className="py-24 bg-white border-b border-slate-100 px-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-10">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-3">
-              Interactive Mentorship
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-4">
-              Reach Your Goals Faster with Expert Mentors
-            </h2>
-            <p className="text-slate-600 text-sm">
-              Connect your journal directly with verified trading coaches for live performance auditing and transparent execution review rooms.
-            </p>
-          </div>
-
-          <div className="flex justify-center mb-10">
-            <div className="bg-slate-100 p-1.5 rounded-2xl inline-flex shadow-inner border border-slate-200">
-              <button
-                onClick={() => setMentorRole('student')}
-                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  mentorRole === 'student' ? 'bg-white text-blue-600 shadow-md shadow-slate-200' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                Student View
-              </button>
-              <button
-                onClick={() => setMentorRole('mentor')}
-                className={`px-6 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  mentorRole === 'mentor' ? 'bg-white text-blue-600 shadow-md shadow-slate-200' : 'text-slate-500 hover:text-slate-900'
-                }`}
-              >
-                Mentor Dashboard
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xl shadow-slate-200/40">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <span className="text-xs font-extrabold text-slate-900">
-                  {mentorRole === 'mentor' ? "Mentor's Live Roster" : "Assigned Mentor Session"}
-                </span>
-                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">Active Sync</span>
-              </div>
-
-              <div className="space-y-2.5">
-                {[
-                  { name: 'Carroll Medhurst', account: 'Closed', pnl: '+$420.00' },
-                  { name: 'Robin Powlowski', account: 'Closed', pnl: '+$1,120.00' },
-                  { name: 'Spencer Sipes', account: 'Closed', pnl: '-$150.00' },
-                  { name: 'Roland Moore', account: 'Closed', pnl: '+$840.00' },
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200/70 rounded-xl text-xs hover:border-blue-200 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 font-bold text-xs flex items-center justify-center text-blue-700 border border-blue-200">
-                        {item.name[0]}
-                      </div>
-                      <span className="font-bold text-slate-800">{item.name}</span>
-                    </div>
-                    <span className={`font-mono font-extrabold ${item.pnl.startsWith('+') ? 'text-emerald-600' : 'text-red-500'}`}>
-                      {item.pnl}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <ul className="space-y-4 text-xs font-semibold text-slate-700 mb-8">
-                <li className="flex items-center gap-3">
-                  <CheckCircle2 size={18} className="text-blue-600 shrink-0" /> One-on-One Coaching with verified execution data
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle2 size={18} className="text-blue-600 shrink-0" /> Real-time feedback on open and closed positions
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle2 size={18} className="text-blue-600 shrink-0" /> Shared trading experiences and setup review rooms
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle2 size={18} className="text-blue-600 shrink-0" /> Accelerated learning curve through automated auditing
-                </li>
-              </ul>
-
-              <a href="#pricing" className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-blue-500/20">
-                Discover Mentorship <ArrowRight size={14} />
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. Automated Behavioral Risk & Rules Engine */}
-      <section className="py-24 bg-slate-50/50 border-b border-slate-100 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-3">
-              Behavioral Protection
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight mb-4">
-              Automated Discipline & Risk Guards
-            </h2>
-            <p className="text-slate-600 text-sm">
-              Protect yourself from revenge trading, over-leveraging, and tilt. Set strict automated alerts before you break your trading plan.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <div className="bg-white border border-slate-200 p-7 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 mb-5">
-                <ShieldCheck size={26} />
-              </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">Daily Drawdown Circuit Breaker</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Automatically disconnects trading copying and sends mobile push alerts if daily loss limit hits your threshold.
-              </p>
-            </div>
-            <div className="bg-white border border-slate-200 p-7 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 mb-5">
-                <Activity size={26} />
-              </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">Over-Trading Detector</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Flags abnormal trade frequencies and warns you when execution pacing deviates from backtested statistics.
-              </p>
-            </div>
-            <div className="bg-white border border-slate-200 p-7 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-              <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600 mb-5">
-                <Award size={26} />
-              </div>
-              <h3 className="text-base font-bold text-slate-900 mb-2">Strategy Compliance Score</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Get scored on how faithfully you adhere to stop losses, position sizing, and predetermined trade setups.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. Platform Integrations */}
-      <section id="integrations" className="py-20 bg-white border-b border-slate-100 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-4">
-            Seamlessly Connects Across Your Infrastructure
-          </h2>
-          <p className="text-xs text-slate-600 max-w-xl mx-auto mb-10">
-            Sync data instantly across Web terminals, Desktop platforms, Mobile devices, and VPS hosting providers.
-          </p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-bold text-slate-700">
-            <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-blue-500 transition-colors">
-              <Globe className="text-blue-600" size={24} />
-              <span>Web Cloud Terminal</span>
-            </div>
-            <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-indigo-500 transition-colors">
-              <Cpu className="text-indigo-600" size={24} />
-              <span>Direct API Sync</span>
-            </div>
-            <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-emerald-500 transition-colors">
-              <Smartphone className="text-emerald-600" size={24} />
-              <span>iOS & Android Apps</span>
-            </div>
-            <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl flex flex-col items-center justify-center gap-3 hover:border-amber-500 transition-colors">
-              <Server className="text-amber-600" size={24} />
-              <span>Ultra-Low Latency VPS</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 8. Pricing Section */}
-      <section id="pricing" className="py-24 bg-slate-50/70 border-b border-slate-100 px-6">
+      {/* 5. Pricing Section */}
+      <section id="pricing" className="py-24 bg-white border-b border-slate-100 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-xs font-bold text-blue-600 uppercase tracking-widest block mb-3">
@@ -404,7 +384,7 @@ export default function TradeProLandingPage() {
               Choose the plan that fits your execution tier. Save 20% with annual billing.
             </p>
 
-            <div className="inline-flex items-center bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+            <div className="inline-flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
               <button
                 onClick={() => setBillingCycle('monthly')}
                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -419,13 +399,12 @@ export default function TradeProLandingPage() {
                   billingCycle === 'yearly' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Yearly <span className="text-[10px] text-emerald-300 ml-1 font-mono">-20%</span>
+                Yearly <span className="text-[10px] text-blue-100 ml-1 font-mono">-20%</span>
               </button>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Starter Tier */}
             <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">Trader Journal</h3>
@@ -446,51 +425,43 @@ export default function TradeProLandingPage() {
                   <li className="flex items-center gap-2.5">
                     <Check size={16} className="text-blue-600" /> 1 Connected Account
                   </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check size={16} className="text-blue-600" /> Standard Analytics
-                  </li>
                 </ul>
               </div>
-              <a href="#" className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold py-3 rounded-xl transition-colors text-center block">
+              <Link href="/signup" className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold py-3 rounded-full transition-colors text-center block">
                 Get Started
-              </a>
+              </Link>
             </div>
 
-            {/* Pro Tier (Featured) */}
-            <div className="bg-gradient-to-b from-blue-50/50 to-white border-2 border-blue-600 rounded-3xl p-8 flex flex-col justify-between relative shadow-xl shadow-blue-500/10">
+            <div className="bg-slate-900 border-2 border-blue-600 rounded-3xl p-8 flex flex-col justify-between relative shadow-xl text-white">
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-[10px] font-black uppercase px-3.5 py-1 rounded-full tracking-wider shadow-sm">
                 Most Popular
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-2">Pro Trader</h3>
-                <p className="text-xs text-slate-500 mb-6">For multi-account prop firm & retail traders.</p>
+                <h3 className="text-lg font-bold text-white mb-2">Pro Trader</h3>
+                <p className="text-xs text-slate-400 mb-6">For multi-account prop firm & retail traders.</p>
                 <div className="flex items-baseline gap-1 mb-6">
-                  <span className="text-3xl font-black text-slate-900">
+                  <span className="text-3xl font-black text-white">
                     ${billingCycle === 'yearly' ? '49' : '59'}
                   </span>
-                  <span className="text-xs text-slate-500">/ month</span>
+                  <span className="text-xs text-slate-400">/ month</span>
                 </div>
-                <ul className="space-y-3.5 text-xs font-medium text-slate-700 mb-8">
+                <ul className="space-y-3.5 text-xs font-medium text-slate-300 mb-8">
                   <li className="flex items-center gap-2.5">
-                    <Check size={16} className="text-blue-600" /> Everything in Journal
+                    <Check size={16} className="text-blue-400" /> Everything in Journal
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={16} className="text-blue-600" /> Trade Copier (Unlimited Accounts)
+                    <Check size={16} className="text-blue-400" /> Trade Copier (Unlimited Accounts)
                   </li>
                   <li className="flex items-center gap-2.5">
-                    <Check size={16} className="text-blue-600" /> Sub-Millisecond Cloud VPS Sync
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check size={16} className="text-blue-600" /> Historical Strategy Backtester
+                    <Check size={16} className="text-blue-400" /> Sub-Millisecond Cloud VPS Sync
                   </li>
                 </ul>
               </div>
-              <a href="#" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-md shadow-blue-500/20 text-center block">
-                Start 14-Day Free Trial
-              </a>
+              <Link href="/signup" className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-full transition-all shadow-md shadow-blue-600/30 text-center block">
+                Start Free Trial
+              </Link>
             </div>
 
-            {/* Fund Tier */}
             <div className="bg-white border border-slate-200 rounded-3xl p-8 flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
               <div>
                 <h3 className="text-lg font-bold text-slate-900 mb-2">Mentor & Fund</h3>
@@ -508,24 +479,90 @@ export default function TradeProLandingPage() {
                   <li className="flex items-center gap-2.5">
                     <Check size={16} className="text-blue-600" /> Student & Roster Management
                   </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check size={16} className="text-blue-600" /> Shared Setup & Audit Rooms
-                  </li>
-                  <li className="flex items-center gap-2.5">
-                    <Check size={16} className="text-blue-600" /> Dedicated Priority Support
-                  </li>
                 </ul>
               </div>
-              <a href="#" className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold py-3 rounded-xl transition-colors text-center block">
+              <Link href="/signup" className="w-full bg-slate-100 hover:bg-slate-200 text-slate-900 text-xs font-bold py-3 rounded-full transition-colors text-center block">
                 Contact Enterprise
-              </a>
+              </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 9. FAQ Section */}
-      <section id="faq" className="py-24 bg-white border-b border-slate-100 px-6">
+      {/* 6. Full-Width Edge-to-Edge Automatic Motion Stats Section */}
+      <section id="stats" className="relative bg-slate-950 text-white py-28 min-h-[640px] flex items-center overflow-hidden border-y border-slate-800">
+        
+        {/* Left Edge Canvas with Automatic Ken Burns Motion */}
+        <div className="absolute left-0 top-0 bottom-0 w-full lg:w-7/12 h-full z-0 overflow-hidden">
+          {statsImages.map((img, index) => (
+            <div
+              key={index}
+              className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+                index === activeSlide ? 'opacity-100 scale-100 z-10' : 'opacity-0 scale-105 z-0'
+              }`}
+            >
+              <img
+                src={img.src}
+                alt={img.title}
+                className="w-full h-full object-cover object-center filter brightness-90 contrast-105"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-950/20 via-slate-950/70 to-slate-950" />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/40" />
+
+              {/* Dynamic Live Status Badge */}
+              <div className="absolute bottom-8 left-8 z-20 hidden sm:flex items-center gap-3 bg-slate-900/80 backdrop-blur-md border border-slate-800 px-4 py-2.5 rounded-2xl shadow-xl">
+                <Radio size={14} className="text-blue-500 animate-pulse" />
+                <div>
+                  <p className="text-[10px] font-black tracking-widest text-blue-400 uppercase">{img.location}</p>
+                  <p className="text-xs font-bold text-white">{img.title}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Right Content Section */}
+        <div className="max-w-7xl mx-auto w-full px-6 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center z-10 relative">
+          <div className="lg:col-start-7 lg:col-span-6 space-y-8">
+            
+            <div>
+              <div className="inline-flex items-center gap-2 bg-blue-950/80 border border-blue-500/30 px-3.5 py-1 rounded-full text-[11px] font-bold text-blue-400 uppercase tracking-widest mb-4">
+                PLATFORM SCALE
+              </div>
+              <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tight leading-[1.12]">
+                Built for Traders Who Execute with Precision
+              </h2>
+              <p className="text-slate-400 text-sm sm:text-base leading-relaxed mt-4 font-normal">
+                Powering over 20M active users globally. TradePro provides institutional-grade trade copying, tick-precision backtesting, and automated trade journaling built for serious retail traders and prop firm managers.
+              </p>
+            </div>
+
+            {/* Scroll-Triggered Counter Section */}
+            <div className="border-t border-slate-800/80 pt-8 grid grid-cols-2 sm:grid-cols-4 gap-6">
+              <div>
+                <AnimatedCounter end={20} suffix="M+" />
+                <p className="text-[11px] font-extrabold text-slate-400 tracking-widest uppercase mt-1">USERS</p>
+              </div>
+              <div>
+                <AnimatedCounter end={150} suffix="K+" />
+                <p className="text-[11px] font-extrabold text-slate-400 tracking-widest uppercase mt-1">SUBSCRIBERS</p>
+              </div>
+              <div>
+                <AnimatedCounter end={14} suffix="+" />
+                <p className="text-[11px] font-extrabold text-slate-400 tracking-widest uppercase mt-1">YEARS</p>
+              </div>
+              <div>
+                <AnimatedCounter end={170} suffix="+" />
+                <p className="text-[11px] font-extrabold text-slate-400 tracking-widest uppercase mt-1">COUNTRIES</p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* 7. FAQ Section */}
+      <section id="faq" className="py-24 bg-slate-50/50 border-b border-slate-100 px-6">
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-black text-slate-900 tracking-tight mb-3">
@@ -566,38 +603,19 @@ export default function TradeProLandingPage() {
         </div>
       </section>
 
-      {/* 10. CTA Banner Section */}
-      <section className="max-w-6xl mx-auto px-6 py-12">
-        <div className="bg-blue-600 text-white rounded-3xl p-10 md:p-14 text-center shadow-2xl shadow-blue-500/20 relative overflow-hidden">
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight">
-            Ready to Transform Your Trading Experience?
-          </h2>
-          <p className="text-sm md:text-base text-blue-100 mt-4 max-w-2xl mx-auto leading-relaxed font-medium">
-            Wake up everyday with the confidence that you have the tools and insights to make informed trading decisions. With TradePro, you’re not just trading; you’re thriving.
-          </p>
-          <a
-            href="#pricing"
-            className="inline-block mt-8 bg-white text-blue-600 hover:bg-blue-50 text-xs font-bold px-8 py-4 rounded-xl transition-all shadow-lg hover:shadow-xl"
-          >
-            Get Started Now
-          </a>
-        </div>
-      </section>
-
-      {/* 11. Footer */}
-      <footer className="bg-slate-900 text-slate-400 text-xs py-12 px-6 border-t border-slate-800">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
+      {/* 8. Footer */}
+      <footer className="bg-slate-950 text-slate-400 border-t border-slate-800 py-12 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-xs font-medium">
+          <div className="flex items-center gap-2.5">
             <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-black flex items-center justify-center text-[10px]">
               TJ
             </div>
-            <span className="font-extrabold text-white text-sm">TradePro</span>
+            <span className="font-bold text-white">TradePro Terminal</span>
+            <span>© 2026 TradePro Inc. All rights reserved.</span>
           </div>
-          <p className="text-slate-500 text-[11px]">
-            © {new Date().getFullYear()} TradePro Terminal Inc. All rights reserved. High-risk investment warning applies.
-          </p>
-          <div className="flex gap-6 font-semibold">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+
+          <div className="flex items-center gap-6">
+            <a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
             <a href="#" className="hover:text-white transition-colors">Risk Disclosure</a>
           </div>
