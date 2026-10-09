@@ -1,11 +1,35 @@
 {
   "name": "trading-journal",
   "version": "1.0.0",
-  "description": "",
+  "description": "Next-Gen Trading Journal & Analytics Terminal",
+  "type": "module",
   "main": "index.js",
   "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "type": "commonjs"
+  "keywords": [
+    "trading",
+    "journal",
+    "react",
+    "vite"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "lucide-react": "^1.44.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "autoprefixer": "^10.5.6",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.0"
+  }
 }

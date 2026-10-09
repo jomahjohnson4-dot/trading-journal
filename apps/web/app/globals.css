@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-border: #E2E8F0;
+  --color-primary: #2962FF;       /* TradingView Brand Blue */
+  --color-primary-hover: #1E53E5;
+  --color-win: #089981;           /* TradingView Bullish Green */
+  --color-win-bg: #E6F4F1;
+  --color-loss: #F23645;          /* TradingView Bearish Red */
+  --color-loss-bg: #FCE8EA;
+  --color-heading: #131722;       /* Dark Charcoal Text */
+  --color-subtext: #787B86;       /* Neutral Gray */
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-heading);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
